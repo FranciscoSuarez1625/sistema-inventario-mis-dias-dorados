@@ -76,9 +76,7 @@ export function FiltrosInventario({
           Filtrar
         </Button>
         {hayFiltros && (
-          <Button asChild variant="ghost" size="lg">
-            <Link href={action}>Limpiar</Link>
-          </Button>
+          <Button variant="ghost" size="lg" nativeButton={false} render={<Link href={action} />}>Limpiar</Button>
         )}
       </div>
     </form>

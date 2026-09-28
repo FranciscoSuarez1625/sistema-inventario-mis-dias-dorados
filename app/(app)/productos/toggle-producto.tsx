@@ -38,12 +38,10 @@ export function ToggleProducto({ id, nombre, activo }: { id: string; nombre: str
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" disabled={pending}>
+      <AlertDialogTrigger render={<Button variant="ghost" size="sm" disabled={pending} />}>
           <PowerOff aria-hidden />
           Desactivar<span className="sr-only"> {nombre}</span>
-        </Button>
-      </AlertDialogTrigger>
+        </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>¿Desactivar {nombre}?</AlertDialogTitle>

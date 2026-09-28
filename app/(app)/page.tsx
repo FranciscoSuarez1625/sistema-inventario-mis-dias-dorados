@@ -74,18 +74,14 @@ export default async function InicioPage({
         </div>
         {puedeEditar && (
           <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg">
-              <Link href="/entradas/nueva">
+            <Button size="lg" nativeButton={false} render={<Link href="/entradas/nueva" />}>
                 <PackagePlus aria-hidden />
                 Registrar entrada
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="/salidas/nueva">
+              </Button>
+            <Button size="lg" variant="outline" nativeButton={false} render={<Link href="/salidas/nueva" />}>
                 <PackageMinus aria-hidden />
                 Registrar salida
-              </Link>
-            </Button>
+              </Button>
           </div>
         )}
       </div>

@@ -134,19 +134,17 @@ export function ProductoDialog({ producto }: { producto?: ProductoEditable }) {
   const [open, setOpen] = useState(false)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {producto ? (
-          <Button variant="outline" size="sm">
-            <Pencil aria-hidden />
-            Editar<span className="sr-only"> {producto.nombre}</span>
-          </Button>
-        ) : (
-          <Button size="lg">
-            <Plus aria-hidden />
-            Nuevo producto
-          </Button>
-        )}
-      </DialogTrigger>
+      {producto ? (
+        <DialogTrigger render={<Button variant="outline" />}>
+          <Pencil aria-hidden />
+          Editar<span className="sr-only"> {producto.nombre}</span>
+        </DialogTrigger>
+      ) : (
+        <DialogTrigger render={<Button size="lg" />}>
+          <Plus aria-hidden />
+          Nuevo producto
+        </DialogTrigger>
+      )}
       <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-xl">{producto ? 'Editar producto' : 'Nuevo producto'}</DialogTitle>

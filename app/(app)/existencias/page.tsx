@@ -73,19 +73,15 @@ export default async function ExistenciasPage({
                   {puedeEditar && (
                     <TableCell>
                       <div className="flex justify-end gap-1">
-                        <Button asChild variant="ghost" size="icon" title="Registrar entrada">
-                          <Link href={`/entradas/nueva?producto=${p.id}`}>
+                        <Button variant="ghost" size="icon" title="Registrar entrada" nativeButton={false} render={<Link href={`/entradas/nueva?producto=${p.id}`} />}>
                             <PackagePlus aria-hidden />
                             <span className="sr-only">Registrar entrada de {p.nombre}</span>
-                          </Link>
-                        </Button>
+                          </Button>
                         {p.stock_total > 0 && (
-                          <Button asChild variant="ghost" size="icon" title="Registrar salida">
-                            <Link href={`/salidas/nueva?producto=${p.id}`}>
+                          <Button variant="ghost" size="icon" title="Registrar salida" nativeButton={false} render={<Link href={`/salidas/nueva?producto=${p.id}`} />}>
                               <PackageMinus aria-hidden />
                               <span className="sr-only">Registrar salida de {p.nombre}</span>
-                            </Link>
-                          </Button>
+                            </Button>
                         )}
                       </div>
                     </TableCell>
