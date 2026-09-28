@@ -3,10 +3,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NativeSelect } from '@/components/native-select'
-import { CATEGORIAS } from '@/lib/constants'
-import type { FiltrosMovimientos } from '@/lib/data'
+import { getCategorias, type FiltrosMovimientos } from '@/lib/data'
 
-export function FiltrosMovimientosForm({
+export async function FiltrosMovimientosForm({
   action,
   filtros,
   productos,
@@ -17,6 +16,7 @@ export function FiltrosMovimientosForm({
   productos: { id: string; codigo: string; nombre: string }[]
   hidden?: Record<string, string>
 }) {
+  const categorias = await getCategorias()
   const hayFiltros = !!(filtros.desde || filtros.hasta || filtros.tipo || filtros.categoria || filtros.producto)
   const limpiar = hidden ? `${action}?${new URLSearchParams(hidden).toString()}` : action
   return (
@@ -53,9 +53,9 @@ export function FiltrosMovimientosForm({
         </Label>
         <NativeSelect id="categoria-m" name="categoria" defaultValue={filtros.categoria ?? ''}>
           <option value="">Todas</option>
-          {CATEGORIAS.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          {categorias.map((c) => (
+            <option key={c.id} value={c.nombre}>
+              {c.nombre}
             </option>
           ))}
         </NativeSelect>

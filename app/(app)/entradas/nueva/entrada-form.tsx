@@ -10,23 +10,24 @@ import { Field } from '@/components/field'
 import { FormError } from '@/components/form-error'
 import { ProductoSelect, type ProductoOpcion } from '@/components/producto-select'
 import { registrarEntrada, type ActionState } from '@/lib/actions/inventario'
-import { requiereVencimiento } from '@/lib/constants'
 import { formatCantidad } from '@/lib/format'
 
 export function EntradaForm({
   productos,
   hoy,
   inicial,
+  conVencimiento,
 }: {
   productos: ProductoOpcion[]
   hoy: string
   inicial?: string
+  conVencimiento: string[]
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(registrarEntrada, {})
   const [productoId, setProductoId] = useState(inicial ?? '')
   const [formKey, setFormKey] = useState(0)
   const producto = productos.find((p) => p.id === productoId)
-  const vencObligatorio = producto ? requiereVencimiento(producto.categoria) : false
+  const vencObligatorio = producto ? conVencimiento.includes(producto.categoria) : false
   const fe = state.ok ? {} : (state.fieldErrors ?? {})
 
   useEffect(() => {
@@ -95,8 +96,8 @@ export function EntradaForm({
           producto
             ? vencObligatorio
               ? `Obligatoria para ${producto.categoria.toLowerCase()}.`
-              : 'Los insumos no suelen vencer; déjela vacía si no aplica.'
-            : 'Obligatoria para alimentos y medicamentos.'
+              : 'Opcional para esta categoría; déjela vacía si no aplica.'
+            : 'Obligatoria según la categoría del producto.'
         }
       >
         <Input

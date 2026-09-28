@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { checkRol } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
-import { CATEGORIAS, EDITORES } from '@/lib/constants'
+import { EDITORES } from '@/lib/constants'
 import { hoyISO, isFechaISO } from '@/lib/format'
 
 export type ActionState = {
@@ -63,7 +63,7 @@ export async function guardarProducto(_prev: ActionState, fd: FormData): Promise
   if (!codigo) fieldErrors.codigo = 'Escriba un código.'
   else if (!/^[A-Z0-9-]+$/.test(codigo)) fieldErrors.codigo = 'Use solo letras, números y guiones.'
   if (!nombre) fieldErrors.nombre = 'Escriba el nombre del producto.'
-  if (!(CATEGORIAS as readonly string[]).includes(categoria)) fieldErrors.categoria = 'Elija una categoría.'
+  if (!categoria) fieldErrors.categoria = 'Elija una categoría.'
   if (!unidad_medida) fieldErrors.unidad_medida = 'Escriba la unidad (ej.: libras, cajas, unidades).'
   if (!Number.isFinite(stock_minimo) || stock_minimo < 0 || stock_minimo > 1_000_000) {
     fieldErrors.stock_minimo = 'Escriba un número igual o mayor que cero.'
@@ -85,6 +85,10 @@ export async function guardarProducto(_prev: ActionState, fd: FormData): Promise
     : await supabase.from('productos').insert(payload)
 
   if (error) {
+    if (error.message.includes('productos_categoria_fkey')) {
+      const msg = 'La categoría elegida ya no existe.'
+      return { fieldErrors: { categoria: msg }, error: msg }
+    }
     const msg = mensajeDb(error.message)
     if (msg.includes('código')) return { fieldErrors: { codigo: msg }, error: msg }
     return { error: msg }

@@ -19,7 +19,6 @@ import { Field } from '@/components/field'
 import { FormError } from '@/components/form-error'
 import { NativeSelect } from '@/components/native-select'
 import { guardarProducto, type ActionState } from '@/lib/actions/inventario'
-import { CATEGORIAS } from '@/lib/constants'
 
 export type ProductoEditable = {
   id: string
@@ -31,7 +30,15 @@ export type ProductoEditable = {
   descripcion: string | null
 }
 
-function ProductoForm({ producto, onDone }: { producto?: ProductoEditable; onDone: () => void }) {
+function ProductoForm({
+  producto,
+  categorias,
+  onDone,
+}: {
+  producto?: ProductoEditable
+  categorias: string[]
+  onDone: () => void
+}) {
   const [state, action, pending] = useActionState<ActionState, FormData>(guardarProducto, {})
   const fe = state.ok ? {} : (state.fieldErrors ?? {})
 
@@ -67,7 +74,10 @@ function ProductoForm({ producto, onDone }: { producto?: ProductoEditable; onDon
             <option value="" disabled>
               Elija…
             </option>
-            {CATEGORIAS.map((c) => (
+            {producto && !categorias.includes(producto.categoria) && (
+              <option value={producto.categoria}>{producto.categoria}</option>
+            )}
+            {categorias.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -130,7 +140,7 @@ function ProductoForm({ producto, onDone }: { producto?: ProductoEditable; onDon
   )
 }
 
-export function ProductoDialog({ producto }: { producto?: ProductoEditable }) {
+export function ProductoDialog({ producto, categorias }: { producto?: ProductoEditable; categorias: string[] }) {
   const [open, setOpen] = useState(false)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -152,7 +162,7 @@ export function ProductoDialog({ producto }: { producto?: ProductoEditable }) {
             {producto ? 'Actualice los datos del producto.' : 'Registre un producto del catálogo.'}
           </DialogDescription>
         </DialogHeader>
-        {open && <ProductoForm producto={producto} onDone={() => setOpen(false)} />}
+        {open && <ProductoForm producto={producto} categorias={categorias} onDone={() => setOpen(false)} />}
       </DialogContent>
     </Dialog>
   )

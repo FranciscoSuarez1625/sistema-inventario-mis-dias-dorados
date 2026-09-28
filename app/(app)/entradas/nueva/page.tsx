@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/page-header'
 import { requirePerfil } from '@/lib/auth'
 import { EDITORES } from '@/lib/constants'
-import { getExistencias } from '@/lib/data'
+import { getCategorias, getExistencias } from '@/lib/data'
 import { hoyISO } from '@/lib/format'
 import { EntradaForm } from './entrada-form'
 
@@ -15,7 +15,8 @@ export default async function NuevaEntradaPage({
   searchParams: Promise<{ producto?: string }>
 }) {
   await requirePerfil(EDITORES)
-  const [{ producto }, productos] = await Promise.all([searchParams, getExistencias()])
+  const [{ producto }, productos, categorias] = await Promise.all([searchParams, getExistencias(), getCategorias()])
+  const conVencimiento = categorias.filter((c) => c.requiere_vencimiento).map((c) => c.nombre)
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -33,6 +34,7 @@ export default async function NuevaEntradaPage({
           <EntradaForm
             productos={productos}
             hoy={hoyISO()}
+            conVencimiento={conVencimiento}
             inicial={productos.some((p) => p.id === producto) ? producto : undefined}
           />
         )}

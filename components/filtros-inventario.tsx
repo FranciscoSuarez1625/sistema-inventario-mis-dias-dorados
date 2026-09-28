@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NativeSelect } from '@/components/native-select'
-import { CATEGORIAS } from '@/lib/constants'
+import { getCategorias } from '@/lib/data'
 
-export function FiltrosInventario({
+export async function FiltrosInventario({
   action,
   q,
   categoria,
@@ -21,6 +21,7 @@ export function FiltrosInventario({
   mostrarEstado?: boolean
   extra?: React.ReactNode
 }) {
+  const categorias = await getCategorias()
   const hayFiltros = !!(q || categoria || estado)
   return (
     <form
@@ -51,9 +52,9 @@ export function FiltrosInventario({
         </Label>
         <NativeSelect id="categoria-f" name="categoria" defaultValue={categoria ?? ''}>
           <option value="">Todas</option>
-          {CATEGORIAS.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          {categorias.map((c) => (
+            <option key={c.id} value={c.nombre}>
+              {c.nombre}
             </option>
           ))}
         </NativeSelect>
