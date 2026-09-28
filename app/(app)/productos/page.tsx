@@ -5,7 +5,7 @@ import { StockBadge } from '@/components/status-badges'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { requirePerfil } from '@/lib/auth'
 import { EDITORES } from '@/lib/constants'
-import { getExistencias } from '@/lib/data'
+import { getCategorias, getExistencias } from '@/lib/data'
 import { formatCantidad } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { ProductoDialog } from './producto-dialog'
@@ -20,14 +20,17 @@ export default async function ProductosPage({
 }) {
   await requirePerfil(EDITORES)
   const sp = await searchParams
-  const productos = await getExistencias({ ...sp, incluirInactivos: true })
+  const [productos, categorias] = await Promise.all([
+    getExistencias({ ...sp, incluirInactivos: true }),
+    getCategorias().then((cs) => cs.map((c) => c.nombre)),
+  ])
 
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
         title="Productos"
         description="Catálogo de alimentos, medicamentos e insumos."
-        actions={<ProductoDialog />}
+        actions={<ProductoDialog categorias={categorias} />}
       />
       <FiltrosInventario action="/productos" q={sp.q} categoria={sp.categoria} estado={sp.estado} />
 
@@ -66,7 +69,7 @@ export default async function ProductosPage({
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
-                      <ProductoDialog producto={p} />
+                      <ProductoDialog producto={p} categorias={categorias} />
                       <ToggleProducto id={p.id} nombre={p.nombre} activo={p.activo} />
                     </div>
                   </TableCell>

@@ -12,6 +12,7 @@ import {
   PackageMinus,
   PackagePlus,
   Settings,
+  Tags,
   Users,
   type LucideIcon,
 } from 'lucide-react'
@@ -32,6 +33,7 @@ const ITEMS: NavItem[] = [
   { href: '/alertas', label: 'Alertas', icon: Bell, roles: T },
   { href: '/historial', label: 'Historial', icon: History, roles: T },
   { href: '/productos', label: 'Productos', icon: ClipboardList, roles: E },
+  { href: '/categorias', label: 'Categorías', icon: Tags, roles: A },
   { href: '/reportes', label: 'Reportes', icon: FileText, roles: T },
   { href: '/usuarios', label: 'Usuarios', icon: Users, roles: A },
   { href: '/configuracion', label: 'Configuración', icon: Settings, roles: A },

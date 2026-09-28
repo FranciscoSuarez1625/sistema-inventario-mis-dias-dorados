@@ -1,7 +1,6 @@
 'use client'
 
 import { NativeSelect } from '@/components/native-select'
-import { CATEGORIAS } from '@/lib/constants'
 import { formatCantidad } from '@/lib/format'
 
 export type ProductoOpcion = {
@@ -40,7 +39,7 @@ export function ProductoSelect({
       <option value="" disabled>
         Elija un producto…
       </option>
-      {CATEGORIAS.map((cat) => {
+      {[...new Set(productos.map((p) => p.categoria))].sort((a, b) => a.localeCompare(b, 'es')).map((cat) => {
         const items = productos.filter((p) => p.categoria === cat)
         if (!items.length) return null
         return (

@@ -1,7 +1,7 @@
 import 'server-only'
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { CATEGORIAS, POR_PAGINA } from '@/lib/constants'
+import { POR_PAGINA } from '@/lib/constants'
 import { hoyISO, isFechaISO, sumarDias } from '@/lib/format'
 
 export type Existencia = {
@@ -38,6 +38,36 @@ export type Movimiento = {
   usuario: { nombre_completo: string } | null
 }
 
+export type Categoria = {
+  id: string
+  nombre: string
+  descripcion: string | null
+  color: string
+  requiere_vencimiento: boolean
+}
+
+export const getCategorias = cache(async () => {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('categorias')
+    .select('id, nombre, descripcion, color, requiere_vencimiento')
+    .order('nombre')
+  if (error) throw new Error('No se pudieron cargar las categorías.')
+  return (data ?? []) as Categoria[]
+})
+
+export async function getConteoProductosPorCategoria() {
+  const supabase = await createClient()
+  const { data } = await supabase.from('productos').select('categoria')
+  const conteo: Record<string, number> = {}
+  for (const p of data ?? []) conteo[p.categoria] = (conteo[p.categoria] ?? 0) + 1
+  return conteo
+}
+
+function categoriaValida(c?: string): c is string {
+  return !!c && c.length <= 30
+}
+
 const EXISTENCIA_COLS =
   'id, codigo, nombre, categoria, unidad_medida, stock_minimo, descripcion, activo, stock_total, proximo_vencimiento, estado_stock'
 
@@ -69,7 +99,7 @@ export async function getExistencias(filtros: {
   if (!filtros.incluirInactivos) query = query.eq('activo', true)
   const q = limpiarBusqueda(filtros.q)
   if (q) query = query.or(`nombre.ilike.%${q}%,codigo.ilike.%${q}%`)
-  if (filtros.categoria && (CATEGORIAS as readonly string[]).includes(filtros.categoria)) {
+  if (categoriaValida(filtros.categoria)) {
     query = query.eq('categoria', filtros.categoria)
   }
   if (filtros.estado === 'bajo') query = query.in('estado_stock', ['bajo', 'agotado'])
@@ -161,7 +191,7 @@ export async function getMovimientos(f: FiltrosMovimientos) {
   if (f.desde && isFechaISO(f.desde)) query = query.gte('fecha', f.desde)
   if (f.hasta && isFechaISO(f.hasta)) query = query.lte('fecha', f.hasta)
   if (f.tipo === 'entrada' || f.tipo === 'salida') query = query.eq('tipo', f.tipo)
-  if (f.categoria && (CATEGORIAS as readonly string[]).includes(f.categoria)) {
+  if (categoriaValida(f.categoria)) {
     query = query.eq('producto.categoria', f.categoria)
   }
   if (f.producto && /^[0-9a-f-]{36}$/i.test(f.producto)) query = query.eq('producto_id', f.producto)
