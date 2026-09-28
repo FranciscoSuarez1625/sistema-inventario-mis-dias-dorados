@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 export function Brand({ className, subtitle = true }: { className?: string; subtitle?: boolean }) {
   return (
     <div className={cn('flex items-center gap-3', className)}>
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gold text-gold-foreground">
         <Sun className="size-6" aria-hidden />
       </span>
       <span className="flex flex-col leading-tight">
