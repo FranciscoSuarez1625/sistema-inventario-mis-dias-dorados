@@ -101,6 +101,15 @@ export async function actualizarUsuario(_prev: ActionState, fd: FormData): Promi
     return { error: 'Se guardaron los datos, pero no se pudo cambiar la contraseña.' }
   }
 
+  // Changing a password can revoke the user's existing refresh tokens; renew our own session.
+  if (password && id === yo.id) {
+    const { error: sErr } = await supabase.auth.signInWithPassword({
+      email: usuarioAEmail(yo.usuario),
+      password,
+    })
+    if (sErr) console.error('[usuarios] renovar sesión', sErr.message)
+  }
+
   revalidatePath('/usuarios')
   return { ok: true, message: password ? 'Usuario y contraseña actualizados.' : 'Usuario actualizado.', key: Date.now() }
 }
