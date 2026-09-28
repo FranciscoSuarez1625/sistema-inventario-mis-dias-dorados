@@ -65,7 +65,7 @@ export function NavLinks({
               className={cn(
                 'flex min-h-12 items-center gap-3 rounded-lg px-3 text-base font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-sidebar-ring',
                 active
-                  ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                  ? 'bg-sidebar-primary font-semibold text-sidebar-primary-foreground shadow-[inset_4px_0_0_var(--gold)] [&>svg]:text-gold'
                   : 'text-sidebar-foreground hover:bg-sidebar-accent',
                 collapsed && 'justify-center px-0',
               )}
