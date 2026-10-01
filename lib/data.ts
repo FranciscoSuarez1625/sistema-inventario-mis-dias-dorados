@@ -95,7 +95,7 @@ export async function getExistencias(filtros: {
   incluirInactivos?: boolean
 } = {}) {
   const supabase = await createClient()
-  let query = supabase.from('existencias').select(EXISTENCIA_COLS).order('nombre')
+  let query = supabase.from('existencias').select(EXISTENCIA_COLS).order('codigo')
   if (!filtros.incluirInactivos) query = query.eq('activo', true)
   const q = limpiarBusqueda(filtros.q)
   if (q) query = query.or(`nombre.ilike.%${q}%,codigo.ilike.%${q}%`)
@@ -207,6 +207,34 @@ export async function getMovimientos(f: FiltrosMovimientos) {
   const { data, count, error } = await query
   if (error) throw new Error('No se pudo cargar el historial.')
   return { movimientos: (data ?? []) as unknown as Movimiento[], total: count ?? 0 }
+}
+
+export type SalidaConsumo = {
+  cantidad: number
+  fecha: string
+  producto_id: string
+  producto: { codigo: string; nombre: string; unidad_medida: string; categoria: string }
+}
+
+export async function getSalidasEntre(desde: string, hasta: string) {
+  const supabase = await createClient()
+  const TAMANO = 1000
+  const filas: SalidaConsumo[] = []
+  for (let inicio = 0; inicio < 50_000; inicio += TAMANO) {
+    const { data, error } = await supabase
+      .from('movimientos')
+      .select('cantidad, fecha, producto_id, producto:productos!inner(codigo, nombre, unidad_medida, categoria)')
+      .eq('tipo', 'salida')
+      .gte('fecha', desde)
+      .lte('fecha', hasta)
+      .order('fecha')
+      .order('id')
+      .range(inicio, inicio + TAMANO - 1)
+    if (error) throw new Error('No se pudieron cargar las métricas.')
+    filas.push(...((data ?? []) as unknown as SalidaConsumo[]))
+    if (!data || data.length < TAMANO) break
+  }
+  return filas
 }
 
 export async function getProductosOpciones(soloActivos = true) {

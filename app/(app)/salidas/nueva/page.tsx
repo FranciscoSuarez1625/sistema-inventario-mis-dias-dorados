@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
+import { SinPermisoRegistro } from '@/components/sin-permiso-registro'
 import { requirePerfil } from '@/lib/auth'
 import { EDITORES } from '@/lib/constants'
 import { getExistencias } from '@/lib/data'
@@ -14,7 +15,11 @@ export default async function NuevaSalidaPage({
 }: {
   searchParams: Promise<{ producto?: string }>
 }) {
-  await requirePerfil(EDITORES)
+  const perfil = await requirePerfil()
+  if (!EDITORES.includes(perfil.rol)) {
+    const { producto } = await searchParams
+    return <SinPermisoRegistro tipo="salida" productoId={producto} />
+  }
   const supabase = await createClient()
   const [{ producto }, productos, { data: lotes }] = await Promise.all([
     searchParams,

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageHeader } from '@/components/page-header'
+import { SinPermisoRegistro } from '@/components/sin-permiso-registro'
 import { requirePerfil } from '@/lib/auth'
 import { EDITORES } from '@/lib/constants'
 import { getCategorias, getExistencias } from '@/lib/data'
@@ -14,7 +15,11 @@ export default async function NuevaEntradaPage({
 }: {
   searchParams: Promise<{ producto?: string }>
 }) {
-  await requirePerfil(EDITORES)
+  const perfil = await requirePerfil()
+  if (!EDITORES.includes(perfil.rol)) {
+    const { producto } = await searchParams
+    return <SinPermisoRegistro tipo="entrada" productoId={producto} />
+  }
   const [{ producto }, productos, categorias] = await Promise.all([searchParams, getExistencias(), getCategorias()])
   const conVencimiento = categorias.filter((c) => c.requiere_vencimiento).map((c) => c.nombre)
 
