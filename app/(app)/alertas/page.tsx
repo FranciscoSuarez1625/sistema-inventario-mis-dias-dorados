@@ -1,12 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { CircleX, Clock, TriangleAlert } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ChevronRight, CircleX, Clock, TriangleAlert } from 'lucide-react'
 import { EmptyState, PageHeader } from '@/components/page-header'
 import { StockBadge, VencimientoBadge } from '@/components/status-badges'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { requirePerfil } from '@/lib/auth'
-import { EDITORES } from '@/lib/constants'
 import { getConfig, getTotalAlertas, type LoteAlerta } from '@/lib/data'
 import { formatCantidad, formatFecha } from '@/lib/format'
 
@@ -53,6 +51,38 @@ function Seccion({
   )
 }
 
+function ProductoLink({
+  href,
+  accion,
+  nombre,
+  detalle,
+}: {
+  href: string
+  accion: string
+  nombre: string
+  detalle: string
+}) {
+  return (
+    <Link
+      href={href}
+      className="group -m-2 flex items-center gap-3 rounded-lg p-2 outline-none transition-colors hover:bg-secondary focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold text-primary group-hover:underline">
+          {nombre}
+          <span className="sr-only">. {accion}</span>
+        </span>
+        <span className="text-sm text-muted-foreground">{detalle}</span>
+      </span>
+      <span className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary md:flex" aria-hidden>
+        {accion}
+        <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+      </span>
+      <ChevronRight className="size-5 shrink-0 text-primary md:hidden" aria-hidden />
+    </Link>
+  )
+}
+
 function TablaLotes({ lotes, diasAlerta }: { lotes: LoteAlerta[]; diasAlerta: number }) {
   return (
     <div className="overflow-hidden rounded-xl border bg-card">
@@ -69,10 +99,12 @@ function TablaLotes({ lotes, diasAlerta }: { lotes: LoteAlerta[]; diasAlerta: nu
           {lotes.map((l) => (
             <TableRow key={l.id}>
               <TableCell>
-                <span className="block font-semibold">{l.producto.nombre}</span>
-                <span className="text-sm text-muted-foreground">
-                  {l.producto.codigo} · {l.producto.categoria} · ingresó {formatFecha(l.fecha_ingreso)}
-                </span>
+                <ProductoLink
+                  href={`/salidas/nueva?producto=${l.producto.id}`}
+                  accion="Registrar salida"
+                  nombre={l.producto.nombre}
+                  detalle={`${l.producto.codigo} · ${l.producto.categoria} · ingresó ${formatFecha(l.fecha_ingreso)}`}
+                />
               </TableCell>
               <TableCell className="text-right whitespace-nowrap">
                 <span className="font-bold tabular-nums">{formatCantidad(l.cantidad_actual)}</span>{' '}
@@ -91,8 +123,7 @@ function TablaLotes({ lotes, diasAlerta }: { lotes: LoteAlerta[]; diasAlerta: nu
 }
 
 export default async function AlertasPage() {
-  const perfil = await requirePerfil()
-  const puedeEditar = EDITORES.includes(perfil.rol)
+  await requirePerfil()
   const [{ bajo, porVencer, vencidos, total }, { dias_alerta_vencimiento }] = await Promise.all([
     getTotalAlertas(),
     getConfig(),
@@ -105,14 +136,14 @@ export default async function AlertasPage() {
         description={
           total === 0
             ? 'No hay alertas en este momento.'
-            : `Hay ${total} ${total === 1 ? 'alerta que requiere' : 'alertas que requieren'} atención.`
+            : `Hay ${total} ${total === 1 ? 'alerta que requiere' : 'alertas que requieren'} atención. Toque un producto para registrar su movimiento.`
         }
       />
 
       <Seccion
         id="vencidos"
         titulo="Productos vencidos"
-        descripcion="Lotes con fecha de vencimiento pasada que aún tienen existencias. Retírelos y registre la salida."
+        descripcion="Lotes con fecha de vencimiento pasada que aún tienen existencias. Toque el producto para registrar su salida."
         icon={<CircleX className="size-5" aria-hidden />}
         tono="destructive"
         count={vencidos.length}
@@ -127,7 +158,7 @@ export default async function AlertasPage() {
       <Seccion
         id="por-vencer"
         titulo="Próximos a vencer"
-        descripcion={`Lotes que vencen en los próximos ${dias_alerta_vencimiento} días.`}
+        descripcion={`Lotes que vencen en los próximos ${dias_alerta_vencimiento} días. Toque el producto para registrar su salida.`}
         icon={<Clock className="size-5" aria-hidden />}
         tono="warning"
         count={porVencer.length}
@@ -142,7 +173,7 @@ export default async function AlertasPage() {
       <Seccion
         id="stock-bajo"
         titulo="Stock bajo o agotado"
-        descripcion="Productos con existencias iguales o menores al mínimo establecido."
+        descripcion="Productos con existencias iguales o menores al mínimo. Toque el producto para registrar una entrada."
         icon={<TriangleAlert className="size-5" aria-hidden />}
         tono="warning"
         count={bajo.length}
@@ -158,21 +189,18 @@ export default async function AlertasPage() {
                   <TableHead className="text-right">Disponible</TableHead>
                   <TableHead className="hidden sm:table-cell text-right">Mínimo</TableHead>
                   <TableHead>Estado</TableHead>
-                  {puedeEditar && (
-                    <TableHead>
-                      <span className="sr-only">Acciones</span>
-                    </TableHead>
-                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {bajo.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell>
-                      <span className="block font-semibold">{p.nombre}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {p.codigo} · {p.categoria}
-                      </span>
+                      <ProductoLink
+                        href={`/entradas/nueva?producto=${p.id}`}
+                        accion="Registrar entrada"
+                        nombre={p.nombre}
+                        detalle={`${p.codigo} · ${p.categoria}`}
+                      />
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap">
                       <span className="font-bold tabular-nums">{formatCantidad(p.stock_total)}</span>{' '}
@@ -184,11 +212,6 @@ export default async function AlertasPage() {
                     <TableCell>
                       <StockBadge estado={p.estado_stock} />
                     </TableCell>
-                    {puedeEditar && (
-                      <TableCell className="text-right">
-                        <Button variant="outline" nativeButton={false} render={<Link href={`/entradas/nueva?producto=${p.id}`} />}>Registrar entrada</Button>
-                      </TableCell>
-                    )}
                   </TableRow>
                 ))}
               </TableBody>

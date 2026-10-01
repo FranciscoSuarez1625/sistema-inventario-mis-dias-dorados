@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   Bell,
   Boxes,
+  ChartColumn,
   ClipboardList,
   FileText,
   History,
@@ -35,6 +36,7 @@ const ITEMS: NavItem[] = [
   { href: '/productos', label: 'Productos', icon: ClipboardList, roles: E },
   { href: '/categorias', label: 'Categorías', icon: Tags, roles: A },
   { href: '/reportes', label: 'Reportes', icon: FileText, roles: T },
+  { href: '/metricas', label: 'Métricas', icon: ChartColumn, roles: T },
   { href: '/usuarios', label: 'Usuarios', icon: Users, roles: A },
   { href: '/configuracion', label: 'Configuración', icon: Settings, roles: A },
 ]
