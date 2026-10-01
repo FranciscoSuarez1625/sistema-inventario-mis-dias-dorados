@@ -7,7 +7,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { total } = await getTotalAlertas()
 
   return (
-    <AppShell nombre={perfil.nombre_completo} rol={perfil.rol} alertas={total}>
+    <AppShell nombre={perfil.nombre_completo} rol={perfil.rol} rolNombre={perfil.rol_nombre} alertas={total}>
       {children}
     </AppShell>
   )

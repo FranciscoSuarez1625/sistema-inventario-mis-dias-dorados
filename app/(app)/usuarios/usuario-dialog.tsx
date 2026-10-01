@@ -19,11 +19,18 @@ import { FormError } from '@/components/form-error'
 import { NativeSelect } from '@/components/native-select'
 import { actualizarUsuario, crearUsuario } from '@/lib/actions/admin'
 import type { ActionState } from '@/lib/actions/inventario'
-import { ROLES, ROL_LABEL, type Rol } from '@/lib/constants'
+export type UsuarioEditable = { id: string; nombre_completo: string; usuario: string; rol: string }
+export type RolOpcion = { clave: string; nombre: string }
 
-export type UsuarioEditable = { id: string; nombre_completo: string; usuario: string; rol: Rol }
-
-function UsuarioForm({ usuario, onDone }: { usuario?: UsuarioEditable; onDone: () => void }) {
+function UsuarioForm({
+  usuario,
+  roles,
+  onDone,
+}: {
+  usuario?: UsuarioEditable
+  roles: RolOpcion[]
+  onDone: () => void
+}) {
   const [state, action, pending] = useActionState<ActionState, FormData>(
     usuario ? actualizarUsuario : crearUsuario,
     {},
@@ -71,9 +78,9 @@ function UsuarioForm({ usuario, onDone }: { usuario?: UsuarioEditable; onDone: (
       )}
       <Field id="rol" label="Rol" required error={fe.rol}>
         <NativeSelect id="rol" name="rol" defaultValue={usuario?.rol ?? 'encargado'} aria-invalid={!!fe.rol || undefined}>
-          {ROLES.map((r) => (
-            <option key={r} value={r}>
-              {ROL_LABEL[r]}
+          {roles.map((r) => (
+            <option key={r.clave} value={r.clave}>
+              {r.nombre}
             </option>
           ))}
         </NativeSelect>
@@ -105,7 +112,7 @@ function UsuarioForm({ usuario, onDone }: { usuario?: UsuarioEditable; onDone: (
   )
 }
 
-export function UsuarioDialog({ usuario }: { usuario?: UsuarioEditable }) {
+export function UsuarioDialog({ usuario, roles }: { usuario?: UsuarioEditable; roles: RolOpcion[] }) {
   const [open, setOpen] = useState(false)
   const close = useCallback(() => setOpen(false), [])
   return (
@@ -128,7 +135,7 @@ export function UsuarioDialog({ usuario }: { usuario?: UsuarioEditable }) {
             {usuario ? 'Cambie el nombre, el rol o la contraseña.' : 'Cree una cuenta para un miembro del personal.'}
           </DialogDescription>
         </DialogHeader>
-        {open && <UsuarioForm usuario={usuario} onDone={close} />}
+        {open && <UsuarioForm usuario={usuario} roles={roles} onDone={close} />}
       </DialogContent>
     </Dialog>
   )
