@@ -13,6 +13,7 @@ import {
   PackageMinus,
   PackagePlus,
   Settings,
+  ShieldCheck,
   Tags,
   Users,
   type LucideIcon,
@@ -38,6 +39,7 @@ const ITEMS: NavItem[] = [
   { href: '/reportes', label: 'Reportes', icon: FileText, roles: T },
   { href: '/metricas', label: 'Métricas', icon: ChartColumn, roles: T },
   { href: '/usuarios', label: 'Usuarios', icon: Users, roles: A },
+  { href: '/roles', label: 'Roles', icon: ShieldCheck, roles: A },
   { href: '/configuracion', label: 'Configuración', icon: Settings, roles: A },
 ]
 

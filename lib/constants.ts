@@ -7,6 +7,12 @@ export const ROL_LABEL: Record<Rol, string> = {
   consulta: 'Consulta',
 }
 
+export const ACCESO_DESCRIPCION: Record<Rol, string> = {
+  administrador: 'Acceso total: usuarios, roles, categorías, configuración y respaldos.',
+  encargado: 'Registra entradas, salidas y productos.',
+  consulta: 'Solo puede ver existencias, alertas, reportes y métricas.',
+}
+
 export const EDITORES: Rol[] = ['administrador', 'encargado']
 export const TODOS: Rol[] = ['administrador', 'encargado', 'consulta']
 export const SOLO_ADMIN: Rol[] = ['administrador']

@@ -6,24 +6,25 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { Brand } from '@/components/brand'
 import { cerrarSesion } from '@/app/login/actions'
-import { ROL_LABEL, type Rol } from '@/lib/constants'
+import type { Rol } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { NavLinks } from './nav-links'
 
 type Props = {
   nombre: string
   rol: Rol
+  rolNombre: string
   alertas: number
   children: React.ReactNode
 }
 
-function UserBox({ nombre, rol, collapsed }: { nombre: string; rol: Rol; collapsed?: boolean }) {
+function UserBox({ nombre, rol, collapsed }: { nombre: string; rol: string; collapsed?: boolean }) {
   return (
     <div className="flex flex-col gap-2 border-t border-sidebar-border pt-4">
       {!collapsed && (
         <div className="px-1">
           <p className="truncate text-base font-semibold">{nombre}</p>
-          <p className="text-sm opacity-80">{ROL_LABEL[rol]}</p>
+          <p className="truncate text-sm opacity-80">{rol}</p>
         </div>
       )}
       <form action={cerrarSesion}>
@@ -44,7 +45,7 @@ function UserBox({ nombre, rol, collapsed }: { nombre: string; rol: Rol; collaps
   )
 }
 
-export function AppShell({ nombre, rol, alertas, children }: Props) {
+export function AppShell({ nombre, rol, rolNombre, alertas, children }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -71,7 +72,7 @@ export function AppShell({ nombre, rol, alertas, children }: Props) {
         <nav aria-label="Menú principal" className="flex-1 overflow-y-auto">
           <NavLinks rol={rol} alertas={alertas} collapsed={collapsed} />
         </nav>
-        <UserBox nombre={nombre} rol={rol} collapsed={collapsed} />
+        <UserBox nombre={nombre} rol={rolNombre} collapsed={collapsed} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -95,7 +96,7 @@ export function AppShell({ nombre, rol, alertas, children }: Props) {
             <nav aria-label="Menú principal" className="flex-1 overflow-y-auto">
               <NavLinks rol={rol} alertas={alertas} onNavigate={() => setMobileOpen(false)} />
             </nav>
-            <UserBox nombre={nombre} rol={rol} />
+            <UserBox nombre={nombre} rol={rolNombre} />
           </SheetContent>
         </Sheet>
 

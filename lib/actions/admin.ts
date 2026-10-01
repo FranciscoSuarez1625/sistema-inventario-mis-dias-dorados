@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { checkRol } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { ROLES, SOLO_ADMIN, usuarioAEmail, type Rol } from '@/lib/constants'
+import { SOLO_ADMIN, usuarioAEmail } from '@/lib/constants'
 import type { ActionState } from '@/lib/actions/inventario'
 
 const SIN_PERMISO: ActionState = { error: 'Solo el administrador puede realizar esta acción.' }
@@ -13,6 +13,13 @@ const USUARIO = /^[a-z0-9._-]{3,30}$/
 
 function str(fd: FormData, k: string, max = 200) {
   return String(fd.get(k) ?? '').trim().slice(0, max)
+}
+
+async function accesoDeRol(clave: string): Promise<string | null> {
+  if (!/^[a-z0-9-]{1,40}$/i.test(clave)) return null
+  const supabase = await createClient()
+  const { data } = await supabase.from('roles').select('acceso').eq('clave', clave).maybeSingle()
+  return data?.acceso ?? null
 }
 
 function validarPassword(p: string) {
@@ -27,13 +34,13 @@ export async function crearUsuario(_prev: ActionState, fd: FormData): Promise<Ac
 
   const nombre_completo = str(fd, 'nombre_completo', 120)
   const usuario = str(fd, 'usuario', 30).toLowerCase()
-  const rol = str(fd, 'rol', 20) as Rol
+  const rol = str(fd, 'rol', 40)
   const password = String(fd.get('password') ?? '')
 
   const fieldErrors: Record<string, string> = {}
   if (!nombre_completo) fieldErrors.nombre_completo = 'Escriba el nombre completo.'
   if (!USUARIO.test(usuario)) fieldErrors.usuario = 'De 3 a 30 caracteres: letras minúsculas, números, punto o guion.'
-  if (!ROLES.includes(rol)) fieldErrors.rol = 'Elija un rol.'
+  if (!(await accesoDeRol(rol))) fieldErrors.rol = 'Elija un rol.'
   const pErr = validarPassword(password)
   if (pErr) fieldErrors.password = pErr
   if (Object.keys(fieldErrors).length) return { fieldErrors, error: 'Revise los campos marcados.' }
@@ -73,14 +80,16 @@ export async function actualizarUsuario(_prev: ActionState, fd: FormData): Promi
 
   const id = str(fd, 'id', 40)
   const nombre_completo = str(fd, 'nombre_completo', 120)
-  const rol = str(fd, 'rol', 20) as Rol
+  const rol = str(fd, 'rol', 40)
   const password = String(fd.get('password') ?? '')
 
   if (!UUID.test(id)) return { error: 'Usuario no válido.' }
   const fieldErrors: Record<string, string> = {}
   if (!nombre_completo) fieldErrors.nombre_completo = 'Escriba el nombre completo.'
-  if (!ROLES.includes(rol)) fieldErrors.rol = 'Elija un rol.'
-  if (id === yo.id && rol !== 'administrador') fieldErrors.rol = 'No puede quitarse a sí mismo el rol de administrador.'
+  const acceso = await accesoDeRol(rol)
+  if (!acceso) fieldErrors.rol = 'Elija un rol.'
+  else if (id === yo.id && acceso !== 'administrador')
+    fieldErrors.rol = 'No puede quitarse a sí mismo el acceso de administrador.'
   if (password) {
     const pErr = validarPassword(password)
     if (pErr) fieldErrors.password = pErr
