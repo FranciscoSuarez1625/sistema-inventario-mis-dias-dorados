@@ -10,7 +10,7 @@ export async function POST() {
   const supabase = await createClient()
   const [productos, lotes, movimientos, movimientoLotes, perfiles, configuracion] = await Promise.all([
     supabase.from('productos').select('id, codigo, nombre, categoria, unidad_medida, stock_minimo, descripcion, activo, created_at'),
-    supabase.from('lotes').select('id, producto_id, cantidad_inicial, cantidad_actual, fecha_ingreso, fecha_vencimiento, created_at'),
+    supabase.from('lotes').select('id, producto_id, numero_lote, cantidad_inicial, cantidad_actual, fecha_ingreso, fecha_vencimiento, created_at'),
     supabase
       .from('movimientos')
       .select('id, tipo, producto_id, lote_id, cantidad, fecha, destino_o_origen, observaciones, usuario_id, created_at')

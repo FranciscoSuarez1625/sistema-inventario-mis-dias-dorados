@@ -18,7 +18,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Field } from '@/components/field'
 import { FormError } from '@/components/form-error'
 import { NativeSelect } from '@/components/native-select'
+import { CantidadInput } from '@/components/cantidad-input'
 import { guardarProducto, type ActionState } from '@/lib/actions/inventario'
+import { permiteDecimales } from '@/lib/format'
 
 export type ProductoEditable = {
   id: string
@@ -40,6 +42,7 @@ function ProductoForm({
   onDone: () => void
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(guardarProducto, {})
+  const [unidad, setUnidad] = useState(producto?.unidad_medida ?? '')
   const fe = state.ok ? {} : (state.fieldErrors ?? {})
 
   useEffect(() => {
@@ -100,20 +103,29 @@ function ProductoForm({
           <Input
             id="unidad_medida"
             name="unidad_medida"
-            defaultValue={producto?.unidad_medida}
+            value={unidad}
+            onChange={(e) => setUnidad(e.target.value)}
             maxLength={30}
             className="h-11"
             aria-invalid={!!fe.unidad_medida || undefined}
           />
         </Field>
-        <Field id="stock_minimo" label="Stock mínimo" required error={fe.stock_minimo} hint="Avisa cuando baje de aquí.">
-          <Input
+        <Field
+          id="stock_minimo"
+          label="Stock mínimo"
+          required
+          error={fe.stock_minimo}
+          hint={
+            permiteDecimales(unidad)
+              ? 'Avisa cuando baje de aquí. Admite decimales.'
+              : 'Avisa cuando baje de aquí. Solo enteros.'
+          }
+        >
+          <CantidadInput
             id="stock_minimo"
             name="stock_minimo"
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="0.01"
+            decimales={permiteDecimales(unidad)}
+            permitirCero
             defaultValue={producto?.stock_minimo ?? 0}
             className="h-11"
             aria-invalid={!!fe.stock_minimo || undefined}

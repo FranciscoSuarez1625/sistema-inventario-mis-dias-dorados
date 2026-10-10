@@ -103,7 +103,7 @@ function TablaLotes({ lotes, diasAlerta }: { lotes: LoteAlerta[]; diasAlerta: nu
                   href={`/salidas/nueva?producto=${l.producto.id}`}
                   accion="Registrar salida"
                   nombre={l.producto.nombre}
-                  detalle={`${l.producto.codigo} · ${l.producto.categoria} · ingresó ${formatFecha(l.fecha_ingreso)}`}
+                  detalle={`${l.producto.codigo} · Lote ${l.numero_lote} · ingresó ${formatFecha(l.fecha_ingreso)}`}
                 />
               </TableCell>
               <TableCell className="text-right whitespace-nowrap">

@@ -20,6 +20,7 @@ export type Existencia = {
 
 export type LoteAlerta = {
   id: string
+  numero_lote: string
   cantidad_actual: number
   fecha_ingreso: string
   fecha_vencimiento: string
@@ -114,7 +115,7 @@ export async function getStockBajo() {
 }
 
 const LOTE_COLS =
-  'id, cantidad_actual, fecha_ingreso, fecha_vencimiento, producto:productos!inner(id, codigo, nombre, categoria, unidad_medida, activo)'
+  'id, numero_lote, cantidad_actual, fecha_ingreso, fecha_vencimiento, producto:productos!inner(id, codigo, nombre, categoria, unidad_medida, activo)'
 
 export async function getLotesPorVencer(dias: number) {
   const supabase = await createClient()
@@ -142,6 +143,124 @@ export async function getLotesVencidos() {
     .order('fecha_vencimiento')
   if (error) throw new Error('No se pudieron cargar los productos vencidos.')
   return (data ?? []) as unknown as LoteAlerta[]
+}
+
+export type EstadoLote = 'activos' | 'por_vencer' | 'vencidos' | 'agotados' | 'todos'
+
+export const ESTADOS_LOTE: { value: EstadoLote; label: string }[] = [
+  { value: 'activos', label: 'Con existencia' },
+  { value: 'por_vencer', label: 'Por vencer' },
+  { value: 'vencidos', label: 'Vencidos' },
+  { value: 'agotados', label: 'Agotados' },
+  { value: 'todos', label: 'Todos' },
+]
+
+export function leerEstadoLote(v?: string): EstadoLote {
+  return ESTADOS_LOTE.some((e) => e.value === v) ? (v as EstadoLote) : 'activos'
+}
+
+export type LoteListado = {
+  id: string
+  numero_lote: string
+  cantidad_inicial: number
+  cantidad_actual: number
+  fecha_ingreso: string
+  fecha_vencimiento: string | null
+  producto: { id: string; codigo: string; nombre: string; categoria: string; unidad_medida: string }
+}
+
+export const LIMITE_LOTES = 300
+
+export async function getLotes(filtros: { q?: string; categoria?: string; estado: EstadoLote; diasAlerta: number }) {
+  const supabase = await createClient()
+  const hoy = hoyISO()
+  let query = supabase
+    .from('lotes')
+    .select(
+      'id, numero_lote, cantidad_inicial, cantidad_actual, fecha_ingreso, fecha_vencimiento, producto:productos!inner(id, codigo, nombre, categoria, unidad_medida)',
+    )
+    .limit(LIMITE_LOTES)
+
+  const q = limpiarBusqueda(filtros.q)
+  if (q) {
+    const { data: coincidencias } = await supabase
+      .from('productos')
+      .select('id')
+      .or(`nombre.ilike.%${q}%,codigo.ilike.%${q}%`)
+      .limit(200)
+    const ids = (coincidencias ?? []).map((p) => p.id as string)
+    query = ids.length
+      ? query.or(`numero_lote.ilike.%${q}%,producto_id.in.(${ids.join(',')})`)
+      : query.ilike('numero_lote', `%${q}%`)
+  }
+  if (categoriaValida(filtros.categoria)) query = query.eq('producto.categoria', filtros.categoria)
+
+  switch (filtros.estado) {
+    case 'activos':
+      query = query.gt('cantidad_actual', 0).order('fecha_vencimiento', { ascending: true, nullsFirst: false })
+      break
+    case 'por_vencer':
+      query = query
+        .gt('cantidad_actual', 0)
+        .gte('fecha_vencimiento', hoy)
+        .lte('fecha_vencimiento', sumarDias(hoy, filtros.diasAlerta))
+        .order('fecha_vencimiento')
+      break
+    case 'vencidos':
+      query = query.gt('cantidad_actual', 0).lt('fecha_vencimiento', hoy).order('fecha_vencimiento')
+      break
+    case 'agotados':
+      query = query.eq('cantidad_actual', 0).order('fecha_ingreso', { ascending: false })
+      break
+    default:
+      query = query.order('fecha_ingreso', { ascending: false })
+  }
+  query = query.order('numero_lote')
+
+  const { data, error } = await query
+  if (error) throw new Error('No se pudieron cargar los lotes.')
+  return (data ?? []) as unknown as LoteListado[]
+}
+
+export type MovimientoLote = {
+  cantidad: number
+  movimiento: {
+    id: string
+    tipo: 'entrada' | 'salida'
+    fecha: string
+    destino_o_origen: string | null
+    observaciones: string | null
+    created_at: string
+    usuario: { nombre_completo: string } | null
+  }
+}
+
+export async function getLoteDetalle(id: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null
+  const supabase = await createClient()
+  const [{ data: lote }, { data: movs, error }] = await Promise.all([
+    supabase
+      .from('lotes')
+      .select(
+        'id, numero_lote, cantidad_inicial, cantidad_actual, fecha_ingreso, fecha_vencimiento, producto:productos!inner(id, codigo, nombre, categoria, unidad_medida)',
+      )
+      .eq('id', id)
+      .maybeSingle(),
+    supabase
+      .from('movimiento_lotes')
+      .select(
+        'cantidad, movimiento:movimientos!inner(id, tipo, fecha, destino_o_origen, observaciones, created_at, usuario:profiles(nombre_completo))',
+      )
+      .eq('lote_id', id),
+  ])
+  if (!lote) return null
+  if (error) throw new Error('No se pudo cargar el historial del lote.')
+  const movimientos = ((movs ?? []) as unknown as MovimientoLote[]).sort((a, b) =>
+    a.movimiento.fecha === b.movimiento.fecha
+      ? a.movimiento.created_at.localeCompare(b.movimiento.created_at)
+      : a.movimiento.fecha.localeCompare(b.movimiento.fecha),
+  )
+  return { lote: lote as unknown as LoteListado, movimientos }
 }
 
 export const getTotalAlertas = cache(async () => {

@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     return csvResponse(
       `vencimientos-${hoy}.csv`,
       toCSV(
-        ['Situación', 'Código', 'Producto', 'Categoría', 'Cantidad', 'Unidad', 'Fecha de ingreso', 'Fecha de vencimiento'],
+        ['Situación', 'Código', 'Producto', 'Lote', 'Categoría', 'Cantidad', 'Unidad', 'Fecha de ingreso', 'Fecha de vencimiento'],
         [
           ...vencidos.map((l) => ['Vencido', l]),
           ...porVencer.map((l) => ['Por vencer', l]),
@@ -75,6 +75,7 @@ export async function GET(req: NextRequest) {
             s,
             lote.producto.codigo,
             lote.producto.nombre,
+            lote.numero_lote,
             lote.producto.categoria,
             lote.cantidad_actual,
             lote.producto.unidad_medida,
