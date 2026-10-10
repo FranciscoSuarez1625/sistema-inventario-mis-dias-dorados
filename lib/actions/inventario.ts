@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { checkRol } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { EDITORES } from '@/lib/constants'
-import { hoyISO, isFechaISO } from '@/lib/format'
+import { hoyISO, isFechaISO, permiteDecimales } from '@/lib/format'
 
 export type ActionState = {
   ok?: boolean
@@ -38,6 +38,7 @@ function mensajeDb(message?: string) {
     'El producto',
     'Indique el destino',
     'No tiene permiso',
+    'El número de lote',
   ]
   if (conocidos.some((c) => message.startsWith(c))) return message
   console.error('[inventario] error de base de datos', message)
@@ -67,6 +68,8 @@ export async function guardarProducto(_prev: ActionState, fd: FormData): Promise
   if (!unidad_medida) fieldErrors.unidad_medida = 'Escriba la unidad (ej.: libras, cajas, unidades).'
   if (!Number.isFinite(stock_minimo) || stock_minimo < 0 || stock_minimo > 1_000_000) {
     fieldErrors.stock_minimo = 'Escriba un número igual o mayor que cero.'
+  } else if (unidad_medida && !permiteDecimales(unidad_medida) && !Number.isInteger(stock_minimo)) {
+    fieldErrors.stock_minimo = `Use un número entero para productos en ${unidad_medida}.`
   }
   if (id && !UUID.test(id)) return { error: 'Producto no válido.' }
   if (Object.keys(fieldErrors).length) return { fieldErrors, error: 'Revise los campos marcados.' }
@@ -91,6 +94,8 @@ export async function guardarProducto(_prev: ActionState, fd: FormData): Promise
     }
     const msg = mensajeDb(error.message)
     if (msg.includes('código')) return { fieldErrors: { codigo: msg }, error: msg }
+    if (msg.startsWith('La cantidad en bodega')) return { fieldErrors: { unidad_medida: msg }, error: msg }
+    if (msg.startsWith('La cantidad')) return { fieldErrors: { stock_minimo: msg }, error: msg }
     return { error: msg }
   }
 
@@ -117,11 +122,16 @@ export async function registrarEntrada(_prev: ActionState, fd: FormData): Promis
   const fecha_vencimiento = str(fd, 'fecha_vencimiento', 10)
   const origen = str(fd, 'origen', 200)
   const observaciones = str(fd, 'observaciones', 500)
+  const numero_lote = String(fd.get('numero_lote') ?? '').trim().toUpperCase()
 
   const fieldErrors: Record<string, string> = {}
   if (!UUID.test(producto_id)) fieldErrors.producto_id = 'Elija un producto.'
   if (!Number.isFinite(cantidad) || cantidad <= 0 || cantidad > 1_000_000) {
     fieldErrors.cantidad = 'Escriba una cantidad mayor que cero.'
+  }
+  if (numero_lote.length > 40) fieldErrors.numero_lote = 'Máximo 40 caracteres.'
+  else if (numero_lote && !/^[A-Z0-9][A-Z0-9-/._]*$/.test(numero_lote)) {
+    fieldErrors.numero_lote = 'Use solo letras, números, guiones, puntos o barras.'
   }
   if (!isFechaISO(fecha)) fieldErrors.fecha = 'Elija la fecha de ingreso.'
   else if (fecha > hoyISO()) fieldErrors.fecha = 'La fecha de ingreso no puede ser futura.'
@@ -136,10 +146,13 @@ export async function registrarEntrada(_prev: ActionState, fd: FormData): Promis
     p_fecha_vencimiento: fecha_vencimiento || null,
     p_origen: origen,
     p_observaciones: observaciones,
+    p_numero_lote: numero_lote || null,
   })
   if (error) {
     const msg = mensajeDb(error.message)
     if (msg.startsWith('La fecha de vencimiento')) return { fieldErrors: { fecha_vencimiento: msg }, error: msg }
+    if (msg.startsWith('El número de lote')) return { fieldErrors: { numero_lote: msg }, error: msg }
+    if (msg.startsWith('La cantidad')) return { fieldErrors: { cantidad: msg }, error: msg }
     return { error: msg }
   }
 
@@ -176,7 +189,9 @@ export async function registrarSalida(_prev: ActionState, fd: FormData): Promise
   })
   if (error) {
     const msg = mensajeDb(error.message)
-    if (msg.startsWith('Stock insuficiente')) return { fieldErrors: { cantidad: msg }, error: msg }
+    if (msg.startsWith('Stock insuficiente') || msg.startsWith('La cantidad')) {
+      return { fieldErrors: { cantidad: msg }, error: msg }
+    }
     return { error: msg }
   }
 

@@ -40,6 +40,16 @@ export function formatCantidad(n: number | string | null | undefined) {
   return new Intl.NumberFormat('es-GT', { maximumFractionDigits: 2 }).format(v)
 }
 
+// Keep in sync with public.unidad_permite_decimales() in the database.
+const UNIDADES_DECIMALES = new Set([
+  'libra', 'libras', 'lb', 'lbs', 'kilo', 'kilos', 'kg', 'kilogramo', 'kilogramos', 'gramo', 'gramos', 'g', 'gr',
+  'onza', 'onzas', 'oz', 'litro', 'litros', 'l', 'lt', 'mililitro', 'mililitros', 'ml', 'galón', 'galon', 'galones',
+])
+
+export function permiteDecimales(unidad: string | null | undefined) {
+  return UNIDADES_DECIMALES.has((unidad ?? '').trim().toLowerCase())
+}
+
 export function isFechaISO(v: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`))
 }

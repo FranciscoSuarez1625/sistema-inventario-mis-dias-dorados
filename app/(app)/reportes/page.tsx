@@ -187,7 +187,7 @@ async function ReporteVencimientos() {
               <TableCell>
                 <span className="block font-semibold">{l.producto.nombre}</span>
                 <span className="text-sm text-muted-foreground">
-                  {l.producto.codigo} · {l.producto.categoria}
+                  {l.producto.codigo} · Lote {l.numero_lote} · {l.producto.categoria}
                 </span>
               </TableCell>
               <TableCell className="text-right whitespace-nowrap tabular-nums">

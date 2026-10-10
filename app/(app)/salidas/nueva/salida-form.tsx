@@ -10,11 +10,13 @@ import { Field } from '@/components/field'
 import { FormError } from '@/components/form-error'
 import { ProductoSelect, type ProductoOpcion } from '@/components/producto-select'
 import { registrarSalida, type ActionState } from '@/lib/actions/inventario'
-import { formatCantidad, formatFecha } from '@/lib/format'
+import { CantidadInput } from '@/components/cantidad-input'
+import { formatCantidad, formatFecha, permiteDecimales } from '@/lib/format'
 
 export type LoteDisponible = {
   id: string
   producto_id: string
+  numero_lote: string
   cantidad_actual: number
   fecha_vencimiento: string | null
 }
@@ -39,11 +41,17 @@ export function SalidaForm({
   const producto = productos.find((p) => p.id === productoId)
   const lotesProducto = lotes.filter((l) => l.producto_id === productoId)
   const cant = Number(cantidad.replace(',', '.'))
+  const decimales = producto ? permiteDecimales(producto.unidad_medida) : true
   const excede = producto && Number.isFinite(cant) && cant > producto.stock_total
+  const conDecimal = !decimales && cantidad !== '' && Number.isFinite(cant) && !Number.isInteger(cant)
   const fe = state.ok ? {} : (state.fieldErrors ?? {})
   const errorCantidad =
     fe.cantidad ??
-    (excede ? `Solo hay ${formatCantidad(producto.stock_total)} ${producto.unidad_medida} disponibles.` : undefined)
+    (conDecimal
+      ? `Use un número entero para productos en ${producto?.unidad_medida}.`
+      : excede
+        ? `Solo hay ${formatCantidad(producto.stock_total)} ${producto.unidad_medida} disponibles.`
+        : undefined)
 
   useEffect(() => {
     if (state.ok && state.key) {
@@ -86,6 +94,7 @@ export function SalidaForm({
                   return (
                     <li key={l.id} className="flex justify-between gap-3 tabular-nums">
                       <span>
+                        <span className="font-mono font-semibold">{l.numero_lote}</span> ·{' '}
                         {l.fecha_vencimiento ? `Vence ${formatFecha(l.fecha_vencimiento)}` : 'Sin vencimiento'} ·{' '}
                         {formatCantidad(l.cantidad_actual)} {producto.unidad_medida}
                       </span>
@@ -106,13 +115,10 @@ export function SalidaForm({
           required
           error={errorCantidad}
         >
-          <Input
+          <CantidadInput
             id="cantidad"
             name="cantidad"
-            type="number"
-            inputMode="decimal"
-            min="0.01"
-            step="0.01"
+            decimales={decimales}
             max={producto?.stock_total}
             value={cantidad}
             onChange={(e) => setCantidad(e.target.value)}

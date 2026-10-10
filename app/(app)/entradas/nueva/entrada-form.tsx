@@ -10,7 +10,8 @@ import { Field } from '@/components/field'
 import { FormError } from '@/components/form-error'
 import { ProductoSelect, type ProductoOpcion } from '@/components/producto-select'
 import { registrarEntrada, type ActionState } from '@/lib/actions/inventario'
-import { formatCantidad } from '@/lib/format'
+import { CantidadInput } from '@/components/cantidad-input'
+import { formatCantidad, permiteDecimales } from '@/lib/format'
 
 export function EntradaForm({
   productos,
@@ -28,6 +29,7 @@ export function EntradaForm({
   const [formKey, setFormKey] = useState(0)
   const producto = productos.find((p) => p.id === productoId)
   const vencObligatorio = producto ? conVencimiento.includes(producto.categoria) : false
+  const decimales = producto ? permiteDecimales(producto.unidad_medida) : true
   const fe = state.ok ? {} : (state.fieldErrors ?? {})
 
   useEffect(() => {
@@ -60,14 +62,18 @@ export function EntradaForm({
           label={`Cantidad${producto ? ` (${producto.unidad_medida})` : ''}`}
           required
           error={fe.cantidad}
+          hint={
+            producto
+              ? decimales
+                ? 'Puede usar decimales (ej.: 2.5).'
+                : 'Solo números enteros, sin decimales.'
+              : 'Mayor que cero.'
+          }
         >
-          <Input
+          <CantidadInput
             id="cantidad"
             name="cantidad"
-            type="number"
-            inputMode="decimal"
-            min="0.01"
-            step="0.01"
+            decimales={decimales}
             required
             className="h-12 text-lg"
             aria-invalid={!!fe.cantidad || undefined}
@@ -107,6 +113,22 @@ export function EntradaForm({
           required={vencObligatorio}
           className="h-12 sm:max-w-xs"
           aria-invalid={!!fe.fecha_vencimiento || undefined}
+        />
+      </Field>
+
+      <Field
+        id="numero_lote"
+        label="Número de lote"
+        error={fe.numero_lote}
+        hint={`Opcional. Si lo deja vacío se genera uno automático${producto ? ` (ej.: ${producto.codigo}-${hoy.slice(2).replaceAll('-', '')}-01)` : ''}.`}
+      >
+        <Input
+          id="numero_lote"
+          name="numero_lote"
+          maxLength={40}
+          autoCapitalize="characters"
+          className="h-12 uppercase sm:max-w-xs"
+          aria-invalid={!!fe.numero_lote || undefined}
         />
       </Field>
 

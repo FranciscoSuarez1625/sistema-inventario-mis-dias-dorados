@@ -20,6 +20,7 @@ export type Existencia = {
 
 export type LoteAlerta = {
   id: string
+  numero_lote: string
   cantidad_actual: number
   fecha_ingreso: string
   fecha_vencimiento: string
@@ -114,7 +115,7 @@ export async function getStockBajo() {
 }
 
 const LOTE_COLS =
-  'id, cantidad_actual, fecha_ingreso, fecha_vencimiento, producto:productos!inner(id, codigo, nombre, categoria, unidad_medida, activo)'
+  'id, numero_lote, cantidad_actual, fecha_ingreso, fecha_vencimiento, producto:productos!inner(id, codigo, nombre, categoria, unidad_medida, activo)'
 
 export async function getLotesPorVencer(dias: number) {
   const supabase = await createClient()

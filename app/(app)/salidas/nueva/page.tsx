@@ -26,7 +26,7 @@ export default async function NuevaSalidaPage({
     getExistencias(),
     supabase
       .from('lotes')
-      .select('id, producto_id, cantidad_actual, fecha_vencimiento')
+      .select('id, producto_id, numero_lote, cantidad_actual, fecha_vencimiento')
       .gt('cantidad_actual', 0)
       .order('fecha_vencimiento', { ascending: true, nullsFirst: false })
       .order('fecha_ingreso')
