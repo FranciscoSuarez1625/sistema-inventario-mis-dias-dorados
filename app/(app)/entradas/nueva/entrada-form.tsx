@@ -116,21 +116,19 @@ export function EntradaForm({
         />
       </Field>
 
-      <Field
-        id="numero_lote"
-        label="Número de lote"
-        error={fe.numero_lote}
-        hint={`Opcional. Si lo deja vacío se genera uno automático${producto ? ` (ej.: ${producto.codigo}-${hoy.slice(2).replaceAll('-', '')}-01)` : ''}.`}
-      >
-        <Input
-          id="numero_lote"
-          name="numero_lote"
-          maxLength={40}
-          autoCapitalize="characters"
-          className="h-12 uppercase sm:max-w-xs"
-          aria-invalid={!!fe.numero_lote || undefined}
-        />
-      </Field>
+      <div className="rounded-lg border border-dashed border-border px-4 py-3 text-base">
+        <p className="font-medium">Número de lote</p>
+        <p className="text-muted-foreground">
+          Se asigna automáticamente al guardar
+          {producto ? (
+            <>
+              {' '}
+              (ej.: <span className="font-mono text-foreground">{`${producto.codigo}-${hoy.slice(2).replaceAll('-', '')}-01`}</span>)
+            </>
+          ) : null}
+          : código del producto, fecha de ingreso y número de entrada del día.
+        </p>
+      </div>
 
       <Field id="origen" label="Origen o proveedor" hint="Ej.: Donación parroquia, Compra mercado.">
         <Input id="origen" name="origen" maxLength={200} className="h-12" />

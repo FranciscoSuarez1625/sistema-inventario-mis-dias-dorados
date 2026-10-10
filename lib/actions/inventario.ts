@@ -122,16 +122,11 @@ export async function registrarEntrada(_prev: ActionState, fd: FormData): Promis
   const fecha_vencimiento = str(fd, 'fecha_vencimiento', 10)
   const origen = str(fd, 'origen', 200)
   const observaciones = str(fd, 'observaciones', 500)
-  const numero_lote = String(fd.get('numero_lote') ?? '').trim().toUpperCase()
 
   const fieldErrors: Record<string, string> = {}
   if (!UUID.test(producto_id)) fieldErrors.producto_id = 'Elija un producto.'
   if (!Number.isFinite(cantidad) || cantidad <= 0 || cantidad > 1_000_000) {
     fieldErrors.cantidad = 'Escriba una cantidad mayor que cero.'
-  }
-  if (numero_lote.length > 40) fieldErrors.numero_lote = 'Máximo 40 caracteres.'
-  else if (numero_lote && !/^[A-Z0-9][A-Z0-9-/._]*$/.test(numero_lote)) {
-    fieldErrors.numero_lote = 'Use solo letras, números, guiones, puntos o barras.'
   }
   if (!isFechaISO(fecha)) fieldErrors.fecha = 'Elija la fecha de ingreso.'
   else if (fecha > hoyISO()) fieldErrors.fecha = 'La fecha de ingreso no puede ser futura.'
@@ -146,12 +141,10 @@ export async function registrarEntrada(_prev: ActionState, fd: FormData): Promis
     p_fecha_vencimiento: fecha_vencimiento || null,
     p_origen: origen,
     p_observaciones: observaciones,
-    p_numero_lote: numero_lote || null,
   })
   if (error) {
     const msg = mensajeDb(error.message)
     if (msg.startsWith('La fecha de vencimiento')) return { fieldErrors: { fecha_vencimiento: msg }, error: msg }
-    if (msg.startsWith('El número de lote')) return { fieldErrors: { numero_lote: msg }, error: msg }
     if (msg.startsWith('La cantidad')) return { fieldErrors: { cantidad: msg }, error: msg }
     return { error: msg }
   }
