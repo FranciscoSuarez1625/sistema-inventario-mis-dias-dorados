@@ -37,6 +37,52 @@ export type Movimiento = {
   created_at: string
   producto: { codigo: string; nombre: string; categoria: string; unidad_medida: string }
   usuario: { nombre_completo: string } | null
+  lotes: { id: string; numero_lote: string; cantidad: number }[]
+}
+
+type MovimientoRaw = Omit<Movimiento, 'lotes'> & {
+  lotes: { cantidad: number; lote: { id: string; numero_lote: string; fecha_vencimiento: string | null } | null }[]
+}
+
+function normalizarMovimiento(m: MovimientoRaw): Movimiento {
+  return {
+    ...m,
+    lotes: (m.lotes ?? [])
+      .filter((x) => x.lote)
+      .map((x) => ({ id: x.lote!.id, numero_lote: x.lote!.numero_lote, cantidad: x.cantidad }))
+      .sort((a, b) => a.numero_lote.localeCompare(b.numero_lote)),
+  }
+}
+
+export type LoteDisponible = {
+  id: string
+  numero_lote: string
+  cantidad: number
+  fecha_vencimiento: string | null
+}
+
+export async function getLotesDisponiblesPorProducto() {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('lotes')
+    .select('id, producto_id, numero_lote, cantidad_actual, fecha_vencimiento')
+    .gt('cantidad_actual', 0)
+    .order('fecha_vencimiento', { ascending: true, nullsFirst: false })
+    .order('fecha_ingreso')
+    .limit(5000)
+  if (error) throw new Error('No se pudieron cargar los lotes.')
+  const porProducto = new Map<string, LoteDisponible[]>()
+  for (const l of data ?? []) {
+    const lista = porProducto.get(l.producto_id as string) ?? []
+    lista.push({
+      id: l.id as string,
+      numero_lote: l.numero_lote as string,
+      cantidad: Number(l.cantidad_actual),
+      fecha_vencimiento: (l.fecha_vencimiento as string | null) ?? null,
+    })
+    porProducto.set(l.producto_id as string, lista)
+  }
+  return porProducto
 }
 
 export type Categoria = {
@@ -297,7 +343,7 @@ export function leerFiltrosMovimientos(sp: Record<string, string | string[] | un
 }
 
 const MOV_COLS =
-  'id, tipo, cantidad, fecha, destino_o_origen, observaciones, created_at, producto:productos!inner(codigo, nombre, categoria, unidad_medida), usuario:profiles(nombre_completo)'
+  'id, tipo, cantidad, fecha, destino_o_origen, observaciones, created_at, producto:productos!inner(codigo, nombre, categoria, unidad_medida), usuario:profiles(nombre_completo), lotes:movimiento_lotes(cantidad, lote:lotes(id, numero_lote, fecha_vencimiento))'
 
 export async function getMovimientos(f: FiltrosMovimientos) {
   const supabase = await createClient()
@@ -325,7 +371,10 @@ export async function getMovimientos(f: FiltrosMovimientos) {
 
   const { data, count, error } = await query
   if (error) throw new Error('No se pudo cargar el historial.')
-  return { movimientos: (data ?? []) as unknown as Movimiento[], total: count ?? 0 }
+  return {
+    movimientos: ((data ?? []) as unknown as MovimientoRaw[]).map(normalizarMovimiento),
+    total: count ?? 0,
+  }
 }
 
 export type SalidaConsumo = {

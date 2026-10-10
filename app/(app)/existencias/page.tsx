@@ -8,7 +8,8 @@ import { StockBadge, VencimientoBadge } from '@/components/status-badges'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { requirePerfil } from '@/lib/auth'
 import { EDITORES } from '@/lib/constants'
-import { getConfig, getExistencias } from '@/lib/data'
+import { getConfig, getExistencias, getLotesDisponiblesPorProducto } from '@/lib/data'
+import { LotesLista } from '@/components/lotes-lista'
 import { formatCantidad } from '@/lib/format'
 
 export const metadata: Metadata = { title: 'Existencias' }
@@ -21,7 +22,11 @@ export default async function ExistenciasPage({
   const perfil = await requirePerfil()
   const puedeEditar = EDITORES.includes(perfil.rol)
   const sp = await searchParams
-  const [productos, { dias_alerta_vencimiento }] = await Promise.all([getExistencias(sp), getConfig()])
+  const [productos, { dias_alerta_vencimiento }, lotes] = await Promise.all([
+    getExistencias(sp),
+    getConfig(),
+    getLotesDisponiblesPorProducto(),
+  ])
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -53,6 +58,16 @@ export default async function ExistenciasPage({
                   <TableCell>
                     <span className="block font-semibold">{p.nombre}</span>
                     <span className="font-mono text-sm text-muted-foreground">{p.codigo}</span>
+                    {p.stock_total > 0 && (
+                      <span className="mt-1 block text-sm">
+                        <LotesLista
+                          lotes={lotes.get(p.id) ?? []}
+                          unidad={p.unidad_medida}
+                          conCantidad={(lotes.get(p.id)?.length ?? 0) > 1}
+                          max={3}
+                        />
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{p.categoria}</TableCell>
                   <TableCell className="text-right whitespace-nowrap">
