@@ -4,6 +4,7 @@ import { Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState, PageHeader } from '@/components/page-header'
 import { FiltrosMovimientosForm } from '@/components/filtros-movimientos'
+import { LotesLista } from '@/components/lotes-lista'
 import { PrintButton } from '@/components/print-button'
 import { StockBadge, VencimientoBadge } from '@/components/status-badges'
 import { TablaMovimientos } from '@/components/tabla-movimientos'
@@ -12,6 +13,7 @@ import { requirePerfil } from '@/lib/auth'
 import {
   getConfig,
   getExistencias,
+  getLotesDisponiblesPorProducto,
   getLotesPorVencer,
   getLotesVencidos,
   getMovimientos,
@@ -89,7 +91,7 @@ export default async function ReportesPage({
 }
 
 async function ReporteExistencias() {
-  const productos = await getExistencias()
+  const [productos, lotes] = await Promise.all([getExistencias(), getLotesDisponiblesPorProducto()])
   if (productos.length === 0) return <EmptyState>No hay productos registrados.</EmptyState>
   return (
     <div className="overflow-hidden rounded-xl border bg-card print:border-0">
@@ -108,7 +110,19 @@ async function ReporteExistencias() {
           {productos.map((p) => (
             <TableRow key={p.id}>
               <TableCell className="font-mono text-sm">{p.codigo}</TableCell>
-              <TableCell className="font-semibold">{p.nombre}</TableCell>
+              <TableCell>
+                <span className="block font-semibold">{p.nombre}</span>
+                {p.stock_total > 0 && (
+                  <span className="mt-1 block text-sm">
+                    <LotesLista
+                      lotes={lotes.get(p.id) ?? []}
+                      unidad={p.unidad_medida}
+                      conCantidad
+                      conVencimiento
+                    />
+                  </span>
+                )}
+              </TableCell>
               <TableCell className="hidden sm:table-cell print:table-cell">{p.categoria}</TableCell>
               <TableCell className="text-right whitespace-nowrap tabular-nums">
                 {formatCantidad(p.stock_total)} {p.unidad_medida}
@@ -175,6 +189,7 @@ async function ReporteVencimientos() {
         <TableHeader>
           <TableRow>
             <TableHead>Producto</TableHead>
+            <TableHead>Lote</TableHead>
             <TableHead className="text-right">Cantidad</TableHead>
             <TableHead className="hidden sm:table-cell print:table-cell">Ingreso</TableHead>
             <TableHead>Vencimiento</TableHead>
@@ -187,8 +202,16 @@ async function ReporteVencimientos() {
               <TableCell>
                 <span className="block font-semibold">{l.producto.nombre}</span>
                 <span className="text-sm text-muted-foreground">
-                  {l.producto.codigo} · Lote {l.numero_lote} · {l.producto.categoria}
+                  {l.producto.codigo} · {l.producto.categoria}
                 </span>
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                <Link
+                  href={`/lotes/${l.id}`}
+                  className="font-mono text-sm font-semibold underline-offset-2 hover:underline"
+                >
+                  {l.numero_lote}
+                </Link>
               </TableCell>
               <TableCell className="text-right whitespace-nowrap tabular-nums">
                 {formatCantidad(l.cantidad_actual)} {l.producto.unidad_medida}

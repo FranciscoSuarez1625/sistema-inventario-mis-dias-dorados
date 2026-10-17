@@ -1,3 +1,4 @@
+import { LotesLista } from '@/components/lotes-lista'
 import { TipoBadge } from '@/components/status-badges'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { Movimiento } from '@/lib/data'
@@ -28,6 +29,9 @@ export function TablaMovimientos({ movimientos }: { movimientos: Movimiento[] })
                 <span className="block font-semibold">{m.producto.nombre}</span>
                 <span className="text-sm text-muted-foreground">
                   {m.producto.codigo} · {m.producto.categoria}
+                </span>
+                <span className="mt-1 block text-sm">
+                  <LotesLista lotes={m.lotes} unidad={m.producto.unidad_medida} conCantidad={m.lotes.length > 1} />
                 </span>
                 {m.observaciones && (
                   <span className="mt-1 block text-sm text-muted-foreground italic">{m.observaciones}</span>
